@@ -21,5 +21,5 @@ falcosidekick:
 
 Install `falco` using custom values  
 ```shell
-helm install falco falcosecurity/falco -f config/falco-values.yaml -n <namespace-name>
+helm install falco falcosecurity/falco -f config/falco-values.yaml --namespace <namespace-name>
 ```
