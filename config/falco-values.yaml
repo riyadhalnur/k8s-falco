@@ -1,0 +1,141 @@
+image:
+  registry: docker.io
+  repository: falcosecurity/falco
+  tag: 0.30.0
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+docker:
+  enabled: true
+  socket: /var/run/docker.sock
+
+containerd:
+  enabled: true
+  socket: /run/containerd/containerd.sock
+
+kubernetesSupport:
+  enabled: true
+  apiAuth: /var/run/secrets/kubernetes.io/serviceaccount/token
+  apiUrl: "https://$(KUBERNETES_SERVICE_HOST)"
+  enableNodeFilter: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+
+rbac:
+  create: true
+
+podSecurityPolicy:
+  create: false
+
+serviceAccount:
+  create: true
+  annotations: {
+    "env": "dev"
+  }
+
+daemonset:
+  updateStrategy:
+    type: RollingUpdate
+  podAnnotations: {
+    "env": "dev"
+  }
+
+timezone: Asia/Kuala_Lumpur
+
+ebpf:
+  enabled: false
+
+auditLog:
+  enabled: false
+  dynamicBackend:
+    enabled: false
+    url: ""
+
+falco:
+  rulesFile:
+    - /etc/falco/falco_rules.yaml
+    - /etc/falco/falco_rules.local.yaml
+    - /etc/falco/k8s_audit_rules.yaml
+    - /etc/falco/rules.d
+
+  timeFormatISO8601: false
+  jsonOutput: true
+  jsonIncludeOutputProperty: true
+  jsonIncludeTagsProperty: true
+
+  logStderr: true
+  logSyslog: true
+
+  logLevel: info
+  priority: notice
+  bufferedOutputs: false
+
+  syscallEventDrops:
+    actions:
+      - log
+      - alert
+    rate: .03333
+    maxBurst: 10
+
+  output_timeout: 2000
+
+  outputs:
+    rate: 1
+    maxBurst: 1000
+
+  syslogOutput:
+    enabled: true
+
+  stdoutOutput:
+    enabled: true
+  
+  webserver:
+    enabled: true
+    listenPort: 8765
+    nodePort: false
+    k8sAuditEndpoint: /k8s-audit
+    k8sHealthzEndpoint: /healthz
+    sslEnabled: false
+
+  livenessProbe:
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+    periodSeconds: 15
+
+  readinessProbe:
+    initialDelaySeconds: 30
+    timeoutSeconds: 5
+    periodSeconds: 15
+
+  httpOutput:
+    enabled: true
+    url: "http://falcosidekick:2801/"
+
+  metadataDownload:
+    maxMb: 100
+    chunkWaitUs: 1000
+    watchFreqSec: 1
+
+customRules:
+  {}
+
+tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+
+falcosidekick:
+  enabled: true
+  fullfqdn: false
+  config:
+    webhook:
+      address: "https://web.hook.sh/"
+      customHeaders: "X-Webhook-Secret:12345"
+      minimumpriority: "notice"
+      mutualtls: false
+      checkcert: true
